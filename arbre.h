@@ -6,7 +6,7 @@
 typedef struct Node {
     struct Node * left; /* fils gauche */
     struct Node * right; /* fils droit */
-    char name; /* nom de l�op�rateur */
+    char name; /* nom de l�op�rateur ou de la variable */
     int value; /* valeur de la constante */
 } Node;
 
@@ -17,5 +17,8 @@ NodePtr saisie_expression();
 void pre_ordre(NodePtr);
 void in_ordre(NodePtr);
 void post_ordre(NodePtr);
+void calcul_intermediaire(NodePtr node);
+
+int is_feuille(NodePtr node);
 
 #endif
