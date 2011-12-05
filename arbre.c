@@ -11,6 +11,16 @@ NodePtr creer_noeud(char nom, int valeur)
     return noeud;
 }
 
+void liberer_noeud(NodePtr node)
+{
+    if(node != NULL)
+    {
+        liberer_noeud(node->left);
+        liberer_noeud(node->right);
+        free(node);
+    }
+}
+
 NodePtr saisie_expression()
 {
     Pile* stack = creer_pile();
@@ -77,53 +87,154 @@ void post_ordre(NodePtr node)
 void affiche_expression(NodePtr node)
 {
     if (node->name != '\0')
-    {
-        if (!is_feuille(node))
+        if(node->name >= 'a' && node->name <= 'z')
+            printf("%c",node->name);
+        else
         {
             printf("(");
             affiche_expression(node->left);
             printf("%c", node->name);
             affiche_expression(node->right);
             printf(")");
-        } else
-            printf("%c", node->name);
-    } else
+        }
+    else
         printf("%d", node->value);
 }
 
 void calcul_intermediaire(NodePtr node)
 {
-    if (!is_feuille(node->right))
+    if (!is_feuille(node))
     {
-        if (!is_feuille(node->left))
-            calcul_intermediaire(node->left);
-        calcul_intermediaire(node->right);
-    } else
-    {
-        if (!is_feuille(node->left))
-            calcul_intermediaire(node->left);
-        else
+        if (!is_feuille(node->right))
         {
-            // Left & Right sont des feuilles
-            switch (node->name)
-            {
-                case '+':
-                    node->value = node->left->value + node->right->value;
-                    break;
-                case '*':
-                    node->value = node->left->value * node->right->value;
-                    break;
+            if (!is_feuille(node->left))
+                calcul_intermediaire(node->left);
+            calcul_intermediaire(node->right);
+        } else
+          {
+              if (!is_feuille(node->left))
+                calcul_intermediaire(node->left);
+              else
+              {            // Left & Right sont des feuilles
+                switch (node->name)
+                {
+                    case '+':
+                        node->value = node->left->value + node->right->value;
+                        break;
+                    case '*':
+                        node->value = node->left->value * node->right->value;
+                        break;
+                }
+                node->name = '\0';
+                free(node->left);
+                free(node->right);
+                node->left = NULL;
+                node->right = NULL;
+                }
             }
-            node->name = '\0';
-            free(node->left);
-            free(node->right);
-            node->left = NULL;
-            node->right = NULL;
-        }
     }
 }
 
 int is_feuille(NodePtr node)
 {
     return (node->name != '+' && node->name != '*') ? 1 : 0;
+}
+
+NodePtr clone(NodePtr node)
+{
+    NodePtr newnode;
+    if(node != NULL)
+    {
+        newnode = creer_noeud(node->name , node->value);
+        newnode->left = clone(node->left);
+        newnode->right = clone(node->right);
+        return newnode;
+    }
+    return NULL;
+}
+
+int identiques(NodePtr node1,NodePtr node2)
+ {
+    if(node1 == NULL)
+        if(node2 == NULL)
+            return 1;
+        else
+            return 0;
+    else
+        if(node1->name != node2->name || node1->value != node2->value)
+            return 0;
+        else
+            return identiques(node1->left , node2->left) * identiques(node1->right , node2->right);
+ }
+
+void calcul(NodePtr node)
+{
+    NodePtr tmp = clone(node);
+    calcul_intermediaire(tmp);
+    while(!identiques(tmp,node))
+    {
+        calcul_intermediaire(node);
+        calcul_intermediaire(tmp);
+    }
+    liberer_noeud(tmp);
+}
+
+void developpement(NodePtr node)
+{
+    if(node != NULL)
+    {
+        if(node->name == '*')
+        {
+            if(node->left->name == '+')
+            {
+                node->name = '+';
+                node->right->left = node->left->right;
+                node->left->right = clone(node->right);
+                node->right->right = clone(node->right);
+                node->left->name = '*';
+                node->right->name = '*';
+                node->right->value = '\0';
+            }else if(node->right->name == '+')
+                    {
+                        node->name = '+';
+                        node->left->right = node->right->left;
+                        node->right->left = clone(node->left);
+                        node->left->left = clone(node->left);
+                        node->right->name = '*';
+                        node->left->name = '*';
+                        node->left->value = '\0';
+                    }
+        }
+        developpement(node->left);
+        developpement(node->right);
+    }
+}
+
+void derivation(NodePtr node, char v)
+{
+    if(node!=NULL)
+        switch(node->name)
+        {
+            case('\0'):  //Le noeud est une constante
+                node->value = 0;
+                break;
+            case('+'):
+                derivation(node->left,v);
+                derivation(node->right,v);
+                break;
+            case('*'):
+                node->left = clone(node);
+                node->right = clone(node->left);
+                node->name = '+';
+                derivation(node->left->left , v);
+                derivation(node->right->right , v);
+                break;
+            default:
+                if (node->name == v)
+                    node->value = 1;
+                else
+                    node->value = 0;
+                node->name = '\0';
+                break;
+        }
 }
