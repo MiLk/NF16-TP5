@@ -3,7 +3,7 @@
 
 NodePtr creer_noeud(char nom, int valeur)
 {
-    NodePtr noeud = malloc(sizeof (Node));
+    NodePtr noeud = (NodePtr)malloc(sizeof (Node));
     noeud->left = NULL;
     noeud->right = NULL;
     noeud->name = nom;
@@ -24,6 +24,7 @@ void liberer_noeud(NodePtr node)
 NodePtr saisie_expression()
 {
     Pile* stack = creer_pile();
+    int i = 0,j = 0; // Validation de l'expression
     char c = '\0';
     NodePtr tmp;
     while (c != '\n')
@@ -33,26 +34,57 @@ NodePtr saisie_expression()
         {
             case '+':
             case '*':
+                if(j == 0 && i < 2)
+                {
+                    printf("Expression invalide : les deux premiers caracteres doivent etre des operandes !\n");
+                    return NULL;
+                }
                 tmp = creer_noeud(c, '\0');
                 tmp->right = depiler(stack);
                 tmp->left = depiler(stack);
                 empiler(stack, tmp);
+                j++; // on incremente le nombre d'operateurs
                 break;
             default:
                 if (c >= '0' && c <= '9') // Si le caract�re saisi est un chiffre
+                {
                     empiler(stack, creer_noeud('\0', c - '0')); // On l'empile on le convertissant en entier
+                    i++; // on incremente le nombre d'operande
+                }
                 else if (c >= 'a' && c <= 'z') //	Le caract�re est une variable
+                {
                     empiler(stack, creer_noeud(c, '\0'));
+                    i++; // on incremente le nombre d'operande
+                }
                 else if (c != '\n' && c != ' ')
-                    printf("Erreur de saisie.\n");
+                {
+                    printf("Erreur de saisie : caractere inconnu.\n");
+                    return NULL;
+                }
                 break;
         }
     }
-    return depiler(stack);
+    if(i != ( j + 1 ) ) // Si le nombre d'operateurs ou d'operandes est incorrect
+    {
+        printf("Expression invalide : nombre d'operateurs ou d'operandes incorrect !\n");
+        return NULL;
+    }
+    tmp = depiler(stack);
+    if(tmp->name != '+' && tmp->name != '*')
+    {
+        printf("Expression invalide : le dernier caractere doit etre un operateur !\n");
+        return NULL;
+    }
+    return tmp;
 }
 
 void pre_ordre(NodePtr node)
 {
+    if(node == NULL)
+    {
+        printf("Expression inexistante ou incorrecte !\n");
+        return;
+    }
     if (node->name != '\0')
     {
         printf("%c", node->name);
@@ -64,6 +96,11 @@ void pre_ordre(NodePtr node)
 
 void in_ordre(NodePtr node)
 {
+    if(node == NULL)
+    {
+        printf("Expression inexistante ou incorrecte !\n");
+        return;
+    }
     if (node->name != '\0')
     {
         in_ordre(node->left);
@@ -75,6 +112,11 @@ void in_ordre(NodePtr node)
 
 void post_ordre(NodePtr node)
 {
+    if(node == NULL)
+    {
+        printf("Expression inexistante ou incorrecte !\n");
+        return;
+    }
     if (node->name != '\0')
     {
         printf("%c", node->name);
@@ -86,6 +128,11 @@ void post_ordre(NodePtr node)
 
 void affiche_expression(NodePtr node)
 {
+    if(node == NULL)
+    {
+        printf("Expression inexistante ou incorrecte !\n");
+        return;
+    }
     if (node->name != '\0')
         if(node->name >= 'a' && node->name <= 'z')
             printf("%c",node->name);
@@ -103,6 +150,11 @@ void affiche_expression(NodePtr node)
 
 void calcul_intermediaire(NodePtr node)
 {
+    if(node == NULL)
+    {
+        printf("Expression inexistante ou incorrecte !\n");
+        return;
+    }
     if (!is_feuille(node))
     {
         if (!is_feuille(node->right))
@@ -137,6 +189,11 @@ void calcul_intermediaire(NodePtr node)
 
 int is_feuille(NodePtr node)
 {
+    if(node == NULL)
+    {
+        printf("Expression inexistante ou incorrecte !\n");
+        return 0;
+    }
     return (node->name != '+' && node->name != '*') ? 1 : 0;
 }
 
@@ -169,6 +226,11 @@ int identiques(NodePtr node1,NodePtr node2)
 
 void calcul(NodePtr node)
 {
+    if(node == NULL)
+    {
+        printf("Expression inexistante ou incorrecte !\n");
+        return;
+    }
     NodePtr tmp = clone(node);
     calcul_intermediaire(tmp);
     while(!identiques(tmp,node))

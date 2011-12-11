@@ -9,7 +9,7 @@ int main(int argc, char** argv)
 {
     int n=0,m=0, i=0, taille=0;
     char v;
-    NodePtr tab[50];
+    NodePtr tab[50], node;
     do
     {
         printf("1- Saisir une expression\n2- Selectionner une expression\n");
@@ -20,9 +20,13 @@ int main(int argc, char** argv)
                 if(taille<50)
                 {
                     getchar();
-                    taille++;
-                    tab[taille]=saisie_expression();
-                    affiche_expression(tab[taille]);
+                    node = saisie_expression();
+                    if(node != NULL)
+                    {
+                        taille++;
+                        tab[taille]= node;
+                        affiche_expression(tab[taille]);
+                    }
                     printf("\n\n");
                 }
                 else
