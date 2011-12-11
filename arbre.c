@@ -24,7 +24,6 @@ void liberer_noeud(NodePtr node)
 NodePtr saisie_expression()
 {
     Pile* stack = creer_pile();
-    int i = 0,j = 0; // Validation de l'expression
     char c = '\0';
     NodePtr tmp;
     while (c != '\n')
@@ -34,28 +33,21 @@ NodePtr saisie_expression()
         {
             case '+':
             case '*':
-                if(j == 0 && i < 2)
-                {
-                    printf("Expression invalide : les deux premiers caracteres doivent etre des operandes !\n");
-                    return NULL;
-                }
                 tmp = creer_noeud(c, '\0');
                 tmp->right = depiler(stack);
                 tmp->left = depiler(stack);
+                if(tmp->left == NULL || tmp->right == NULL)
+                {
+                    printf("Expression invalide : il n'y a pas assez d'operandes !\n");
+                    return NULL;
+                }
                 empiler(stack, tmp);
-                j++; // on incremente le nombre d'operateurs
                 break;
             default:
                 if (c >= '0' && c <= '9') // Si le caract�re saisi est un chiffre
-                {
                     empiler(stack, creer_noeud('\0', c - '0')); // On l'empile on le convertissant en entier
-                    i++; // on incremente le nombre d'operande
-                }
                 else if (c >= 'a' && c <= 'z') //	Le caract�re est une variable
-                {
                     empiler(stack, creer_noeud(c, '\0'));
-                    i++; // on incremente le nombre d'operande
-                }
                 else if (c != '\n' && c != ' ')
                 {
                     printf("Erreur de saisie : caractere inconnu.\n");
@@ -64,17 +56,19 @@ NodePtr saisie_expression()
                 break;
         }
     }
-    if(i != ( j + 1 ) ) // Si le nombre d'operateurs ou d'operandes est incorrect
-    {
-        printf("Expression invalide : nombre d'operateurs ou d'operandes incorrect !\n");
-        return NULL;
-    }
+
     tmp = depiler(stack);
     if(tmp->name != '+' && tmp->name != '*')
     {
         printf("Expression invalide : le dernier caractere doit etre un operateur !\n");
         return NULL;
     }
+    if(stack->head != NULL) // S'il y a trop d'operandes
+    {
+        printf("Expression invalide : il y a trop d'operandes !\n");
+        return NULL;
+    }
+    free(stack);
     return tmp;
 }
 
