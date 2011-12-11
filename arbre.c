@@ -13,7 +13,7 @@ NodePtr creer_noeud(char nom, int valeur)
 
 void liberer_noeud(NodePtr node)
 {
-    if(node != NULL)
+    if (node != NULL)
     {
         liberer_noeud(node->left);
         liberer_noeud(node->right);
@@ -87,8 +87,8 @@ void post_ordre(NodePtr node)
 void affiche_expression(NodePtr node)
 {
     if (node->name != '\0')
-        if(node->name >= 'a' && node->name <= 'z')
-            printf("%c",node->name);
+        if (node->name >= 'a' && node->name <= 'z')
+            printf("%c", node->name);
         else
         {
             printf("(");
@@ -96,8 +96,7 @@ void affiche_expression(NodePtr node)
             printf("%c", node->name);
             affiche_expression(node->right);
             printf(")");
-        }
-    else
+        } else
         printf("%d", node->value);
 }
 
@@ -111,41 +110,75 @@ void calcul_intermediaire(NodePtr node)
                 calcul_intermediaire(node->left);
             calcul_intermediaire(node->right);
         } else
-          {
-              if (!is_feuille(node->left))
+        {
+            if (!is_feuille(node->left))
                 calcul_intermediaire(node->left);
-              else
-              {            // Left & Right sont des feuilles
+            else
+            { // Left & Right sont des feuilles
+                char name = node->name;
+                int val = node->value;
+                char left = node->left->name;
+                int vall = node->left->value;
+                char right = node->right->name;
+                int valr = node->right->value;
                 switch (node->name)
                 {
                     case '+':
-                        node->value = node->left->value + node->right->value;
+                        // Dans le cas de deux constantes
+                        if (node->left->name == '\0' && node->right->name == '\0')
+                            node->value = node->left->value + node->right->value;
+                            // Si au moins une constante et vaut 0
+                        else if (node->left->name == '\0' && node->left->value == 0)
+                            node->name = node->right->name;
+                            // Si la deuxième est constante et vaut 0
+                        else if (node->right->name == '\0' && node->right->value == 0)
+                            node->name = node->left->name;
+                            // Si les 2 sont des variables
+                        else
+                            return;
                         break;
                     case '*':
-                        node->value = node->left->value * node->right->value;
+                        // Dans le cas de deux constantes
+                        if (node->left->name == '\0' && node->right->name == '\0')
+                            node->value = node->left->value * node->right->value;
+                            // Si au moins une constante et vaut 0
+                        else if ((node->left->name == '\0' && node->left->value == 0) ||
+                                (node->right->name == '\0' && node->right->value == 0))
+                            node->value = 0;
+                            // Si au moins une constante et vaut 1
+                        else if (node->left->name == '\0' && node->left->value == 1)
+                            node->name = node->right->name;
+                            // Si la deuxième est constante et vaut 1
+                        else if (node->right->name == '\0' && node->right->value == 1)
+                            node->name = node->left->name;
+                            // Si les 2 sont des variables
+                        else
+                            return;
                         break;
                 }
-                node->name = '\0';
+                if (node->name == '*' || node->name == '+')
+                    node->name = '\0';
                 free(node->left);
                 free(node->right);
                 node->left = NULL;
                 node->right = NULL;
-                }
             }
+        }
     }
 }
 
 int is_feuille(NodePtr node)
 {
+    if(node == NULL) return 0;
     return (node->name != '+' && node->name != '*') ? 1 : 0;
 }
 
 NodePtr clone(NodePtr node)
 {
     NodePtr newnode;
-    if(node != NULL)
+    if (node != NULL)
     {
-        newnode = creer_noeud(node->name , node->value);
+        newnode = creer_noeud(node->name, node->value);
         newnode->left = clone(node->left);
         newnode->right = clone(node->right);
         return newnode;
@@ -153,25 +186,27 @@ NodePtr clone(NodePtr node)
     return NULL;
 }
 
-int identiques(NodePtr node1,NodePtr node2)
- {
-    if(node1 == NULL)
-        if(node2 == NULL)
+int identiques(NodePtr node1, NodePtr node2)
+{
+    if (node1 == NULL)
+        if (node2 == NULL)
             return 1;
         else
             return 0;
     else
-        if(node1->name != node2->name || node1->value != node2->value)
-            return 0;
-        else
-            return identiques(node1->left , node2->left) * identiques(node1->right , node2->right);
- }
+        if (node2 == NULL)
+        return 0;
+    else if (node1->name != node2->name || node1->value != node2->value)
+        return 0;
+    else
+        return identiques(node1->left, node2->left) * identiques(node1->right, node2->right);
+}
 
 void calcul(NodePtr node)
 {
     NodePtr tmp = clone(node);
     calcul_intermediaire(tmp);
-    while(!identiques(tmp,node))
+    while (!identiques(tmp, node))
     {
         calcul_intermediaire(node);
         calcul_intermediaire(tmp);
@@ -181,29 +216,50 @@ void calcul(NodePtr node)
 
 void developpement(NodePtr node)
 {
-    if(node != NULL)
+    if (node != NULL)
     {
-        if(node->name == '*')
+        if (node->name == '*')
         {
-            if(node->left->name == '+')
+            NodePtr constant;
+            if (node->left->name == '+')
             {
+                printf("\ngauche\n");
+                affiche_expression(node);
+                printf("\n");
                 node->name = '+';
-                node->right->left = node->left->right;
-                node->left->right = clone(node->right);
-                node->right->right = clone(node->right);
+                constant = clone(node->right);
+                liberer_noeud(node->right->left);
+                liberer_noeud(node->right->right);
+                node->right->left = clone(node->left->right); // deuxieme coefficient
+                liberer_noeud(node->left->right);
+                node->left->right = constant; // partie droite invariante
+                node->right->right = clone(constant); // partie droite invariante
                 node->left->name = '*';
                 node->right->name = '*';
                 node->right->value = '\0';
-            }else if(node->right->name == '+')
-                    {
-                        node->name = '+';
-                        node->left->right = node->right->left;
-                        node->right->left = clone(node->left);
-                        node->left->left = clone(node->left);
-                        node->right->name = '*';
-                        node->left->name = '*';
-                        node->left->value = '\0';
-                    }
+                printf("\n");
+                affiche_expression(node);
+                printf("\n");
+            } else if (node->right->name == '+')
+            {
+                printf("\ndroite\n");
+                affiche_expression(node);
+                printf("\n");
+                node->name = '+';
+                constant = clone(node->left);
+                liberer_noeud(node->left->left);
+                liberer_noeud(node->left->right);
+                node->left->right = clone(node->right->left);
+                liberer_noeud(node->right->left);
+                node->right->left = constant;
+                node->left->left = clone(constant);
+                node->right->name = '*';
+                node->left->name = '*';
+                node->left->value = '\0';
+                printf("\n");
+                affiche_expression(node);
+                printf("\n");
+            }
         }
         developpement(node->left);
         developpement(node->right);
@@ -212,22 +268,22 @@ void developpement(NodePtr node)
 
 void derivation(NodePtr node, char v)
 {
-    if(node!=NULL)
-        switch(node->name)
+    if (node != NULL)
+        switch (node->name)
         {
-            case('\0'):  //Le noeud est une constante
+            case('\0'): //Le noeud est une constante
                 node->value = 0;
                 break;
             case('+'):
-                derivation(node->left,v);
-                derivation(node->right,v);
+                derivation(node->left, v);
+                derivation(node->right, v);
                 break;
             case('*'):
                 node->left = clone(node);
                 node->right = clone(node->left);
                 node->name = '+';
-                derivation(node->left->left , v);
-                derivation(node->right->right , v);
+                derivation(node->left->left, v);
+                derivation(node->right->right, v);
                 break;
             default:
                 if (node->name == v)

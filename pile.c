@@ -8,7 +8,7 @@ Pile* creer_pile()
 
 void empiler(Pile* pile, NodePtr noeud)
 {
-    printf("Empiler %c %i \n",noeud->name,noeud->value);
+    //printf("Empiler %c %i \n",noeud->name,noeud->value);
     Element* element = (Element*)malloc(sizeof(Element));
     element->noeud = noeud;
     element->succ = pile->head;
@@ -17,9 +17,11 @@ void empiler(Pile* pile, NodePtr noeud)
 
 NodePtr depiler(Pile* pile)
 {
-    
+    NodePtr node; 
     Element* element = pile->head;
-    printf("Depiler %c %i \n",element->noeud->name,element->noeud->value);
+    //printf("Depiler %c %i \n",element->noeud->name,element->noeud->value);
     pile->head = element->succ;
-    return element->noeud;
+    node = element->noeud;
+    free(element);
+    return node;
 }
