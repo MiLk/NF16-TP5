@@ -17,9 +17,11 @@ void empiler(Pile* pile, NodePtr noeud)
 
 NodePtr depiler(Pile* pile)
 {
-    
+    NodePtr node; 
     Element* element = pile->head;
     //printf("Depiler %c %i \n",element->noeud->name,element->noeud->value);
     pile->head = element->succ;
-    return element->noeud;
+    node = element->noeud;
+    free(element);
+    return node;
 }
