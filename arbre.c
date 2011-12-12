@@ -278,9 +278,6 @@ void developpement(NodePtr node)
             NodePtr constant;
             if (node->left->name == '+')
             {
-                printf("\ngauche\n");
-                affiche_expression(node);
-                printf("\n");
                 node->name = '+';
                 constant = clone(node->right);
                 liberer_noeud(node->right->left);
@@ -292,14 +289,8 @@ void developpement(NodePtr node)
                 node->left->name = '*';
                 node->right->name = '*';
                 node->right->value = '\0';
-                printf("\n");
-                affiche_expression(node);
-                printf("\n");
             } else if (node->right->name == '+')
             {
-                printf("\ndroite\n");
-                affiche_expression(node);
-                printf("\n");
                 node->name = '+';
                 constant = clone(node->left);
                 liberer_noeud(node->left->left);
@@ -311,9 +302,6 @@ void developpement(NodePtr node)
                 node->right->name = '*';
                 node->left->name = '*';
                 node->left->value = '\0';
-                printf("\n");
-                affiche_expression(node);
-                printf("\n");
             }
         }
         developpement(node->left);
